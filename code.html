@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Data Diri</title>
+    <style>
+        /* Reset & Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            transition: all 0.3s;
+            overflow-x: hidden;
+        }
+
+        /* Loading Animation */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 1.2rem;
+            margin-top: 15px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Layout */
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 280px;
+            height: 100vh;
+            background: linear-gradient(180deg, #2c3e50, #1a1a2e);
+            color: white;
+            position: fixed;
+            left: 0;
+            top: 0;
+            transition: all 0.3s ease;
+            box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .profile-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar.collapsed .profile-img {
+            width: 50px;
+            height: 50px;
+        }
+
+        .profile-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            transition: all 0.3s;
+        }
+
+        .sidebar.collapsed .profile-name {
+            opacity: 0;
+            height: 0;
+            margin: 0;
+        }
+
+        .profile-title {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+            transition: all 0.3s;
+        }
+
+        .sidebar.collapsed .profile-title {
+            opacity: 0;
+            height: 0;
+            margin: 0;
+        }
+
+        .toggle-btn {
+            position: absolute;
+            right: 15px;
+            top: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .menu-item {
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-item.active {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .menu-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: #4facfe;
+        }
+
+        .menu-icon {
+            font-size: 1.3rem;
+            margin-right: 15px;
+            min-width: 25px;
+            text-align: center;
+        }
+
+        .menu-text {
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .sidebar.collapsed .menu-text {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            overflow: hidden;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.collapsed ~ .main-content {
+            margin-left: 80px;
+        }
+
+        .content-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            margin-bottom: 25px;
+            color: #2c3e50;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+        }
+
+        /* Profile Section */
+        .profile-card {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .profile-left {
+            flex: 0 0 250px;
+            text-align: center;
+            padding-right: 30px;
+            border-right: 1px solid #eee;
+        }
+
+        .profile-right {
+            flex: 1;
+            padding-left: 30px;
+        }
+
+        .profile-detail-img {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid rgba(79, 172, 254, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .social-link {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #f4f4f4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 5px;
+            color: #555;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .social-link:hover {
+            background: #4facfe;
+            color: white;
+            transform: translateY(-3px);
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .info-item {
+            margin-bottom: 15px;
+            display: flex;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #4facfe;
+            margin-right: 10px;
+            min-width: 120px;
+        }
+
+        .info-value {
+            color: #555;
+            flex: 1;
+        }
+
+        /* Education Section */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background: #4facfe;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 30px;
+        }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -38px;
+            top: 0;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            border: 4px solid #4facfe;
+        }
+
+        .timeline-date {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .timeline-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+
+        .timeline-location {
+            font-size: 0.9rem;
+            color: #777;
+            margin-bottom: 10px;
+        }
+
+        .timeline-desc {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        /* Work Section */
+        .job-item {
+            display: flex;
+            margin-bottom: 25px;
+        }
+
+        .job-year {
+            flex: 0 0 80px;
+            font-weight: 600;
+            color: #4facfe;
+        }
+
+        .job-details {
+            flex: 1;
+        }
+
+        .job-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .job-company {
+            font-size: 0.95rem;
+            color: #777;
+            margin-bottom: 10px;
+        }
+
+        .job-desc {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        /* Hobbies Section */
+        .hobbies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .hobby-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .hobby-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .hobby-icon {
+            font-size: 2.5rem;
+            color: #4facfe;
+            margin-bottom: 15px;
+        }
+
+        .hobby-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .hobby-desc {
+            font-size: 0.9rem;
+            color: #777;
+        }
+
+        /* Contact Section */
+        .contact-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .contact-card {
+            flex: 1 1 200px;
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .contact-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .contact-icon {
+            font-size: 1.8rem;
+            color: #4facfe;
+            margin-right: 20px;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .contact-details {
+            flex: 1;
+        }
+
+        .contact-type {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .contact-value {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 3px 10px rgba(79, 172, 254, 0.3);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .profile-card {
+                flex-direction: column;
+            }
+
+            .profile-left {
+                padding-right: 0;
+                padding-bottom: 30px;
+                border-right: none;
+                border-bottom: 1px solid #eee;
+            }
+
+            .profile-right {
+                padding-left: 0;
+                padding-top: 30px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 80px;
+            }
+
+            .sidebar .profile-name,
+            .sidebar .profile-title,
+            .sidebar .menu-text {
+                opacity: 0;
+                height: 0;
+                margin: 0;
+            }
+
+            .main-content {
+                margin-left: 80px;
+            }
+
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.collapsed ~ .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading" class="loading-screen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Memuat Profil...</div>
+    </div>
+
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="athhar.jpg" alt="Profile Photo" class="profile-img">
+                <h3 class="profile-name">Athhar Muhammad Alfianda</h3>
+                <p class="profile-title">Web Developer</p>
+                <button class="toggle-btn" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <div class="sidebar-menu">
+                <div class="menu-item active" onclick="showSection('profile')">
+                    <div class="menu-icon"><i class="fas fa-user"></i></div>
+                    <div class="menu-text">Profil</div>
+                </div>
+                <div class="menu-item" onclick="showSection('education')">
+                    <div class="menu-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <div class="menu-text">Riwayat Pendidikan</div>
+                </div>
+                <div class="menu-item" onclick="showSection('work')">
+                    <div class="menu-icon"><i class="fas fa-briefcase"></i></div>
+                    <div class="menu-text">Riwayat Pekerjaan</div>
+                </div>
+                <div class="menu-item" onclick="showSection('hobbies')">
+                    <div class="menu-icon"><i class="fas fa-heart"></i></div>
+                    <div class="menu-text">Hobi & Minat</div>
+                </div>
+                <div class="menu-item" onclick="showSection('contact')">
+                    <div class="menu-icon"><i class="fas fa-envelope"></i></div>
+                    <div class="menu-text">Kontak</div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div id="profile" class="content-section active">
+                <h2 class="section-title">Profil</h2>
+                <div class="profile-card">
+                    <div class="profile-left">
+                        <img src="athhar.jpg" alt="Profile" class="profile-detail-img">
+                        <div class="social-links">
+                            <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#" class="social-link"><i class="fab fa-whatsapp"></i></a>
+                            <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                        </div>
+                    </div>
+                    <div class="profile-right">
+                        <div class="info-card">
+                            <div class="info-item">
+                                <div class="info-label">Nama Lengkap:</div>
+                                <div class="info-value">Athhar Muhammad Alfianda</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Tanggal Lahir:</div>
+                                <div class="info-value">25 Juni 2005</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Lokasi:</div>
+                                <div class="info-value">Jakarta, Indonesia</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="education" class="content-section">
+                <h2 class="section-title">Riwayat Pendidikan</h2>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-date">2010 - 2011</div>
+                        <div class="timeline-title">Taman Kanak-kanak (TK)</div>
+                        <div class="timeline-location">PAUD RUMAH MUTIARA</div>
+                        <div class="timeline-desc">Mempelajari dasar-dasar penting seperti calistung dan mengenal huruf dan angka, warna dan bentuk serta kegiatan seni dan fisik.</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-date">2011 - 2016</div>
+                        <div class="timeline-title">Sekolah Dasar (SD)</div>
+                        <div class="timeline-location">SDIT AL-FATH/SDN BINONG 3</div>
+                        <div class="timeline-desc">Mempelajari Pendidikan Agama dan Budi Pekerti, Pendidikan Pancasila dan Kewarganegaraan (PPKn), Bahasa Indonesia, Matematika, Ilmu Pengetahuan Alam dan Sosial (IPAS), Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK), serta Seni dan Budaya.</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-date">2016 - 2019</div>
+                        <div class="timeline-title">Sekolah Menengah Pertama (SMP)</div>
+                        <div class="timeline-location">SMPS NURUL FITRI</div>
+                        <div class="timeline-desc">Mempelajari Pendidikan Agama dan Budi Pekerti, Pendidikan Pancasila dan Kewarganegaraan, Bahasa Indonesia, Matematika, Ilmu Pengetahuan Alam, Ilmu Pengetahuan Sosial, dan Bahasa Inggris. Kelompok B mencakup Seni Budaya, Pendidikan Jasmani, Olahraga, dan Kesehatan, serta Keterampilan/Teknologi Informasi dan Komunikasi (TIK).</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-date">2019 - 2023</div>
+                        <div class="timeline-title">Sekolah Menengah Kejuruan (SMK)</div>
+                        <div class="timeline-location">SMKS BINONG PERMAI</div>
+                        <div class="timeline-desc">Mempelajari berbagai kejuruan atau keterampilan khusus yang relevan dengan dunia industri dan pekerjaan.</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-date">2023 - Sekarang</div>
+                        <div class="timeline-title">S1 SISTEM INFORMASI</div>
+                        <div class="timeline-location">UNIVERSITAS PAMULANG</div>
+                        <div class="timeline-desc">Mempelajari perancangan, pengembangan, dan implementasi sistem informasi.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="work" class="content-section">
+                <h2 class="section-title">Riwayat Pekerjaan</h2>
+                <div class="job-item">
+                    <div class="job-year">2022 - 2024</div>
+                    <div class="job-details">
+                        <div class="job-title">Web Developer</div>
+                        <div class="job-company">PT. Teknologi Canggih</div>
+                        <div class="job-desc">Bertanggung jawab untuk pengembangan dan pemeliharaan situs web perusahaan.</div>
+                    </div>
+                </div>
+                <div class="job-item">
+                    <div class="job-year">2025 - 2027</div>
+                    <div class="job-details">
+                        <div class="job-title">Junior Developer</div>
+                        <div class="job-company">Startup XYZ</div>
+                        <div class="job-desc">Membantu dalam pengembangan aplikasi web dan mobile.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="hobbies" class="content-section">
+                <h2 class="section-title">Hobi & Minat</h2>
+                <div class="hobbies-grid">
+                    <div class="hobby-card">
+                        <div class="hobby-icon"><i class="fas fa-futbol"></i></div>
+                        <div class="hobby-title">Sepak bola</div>
+                        <div class="hobby-desc">Menikmati keseruannya sebagai olahraga kompetitif, dan pengaruh budaya serta sosial yang kuat.</div>
+                    </div>
+                    <div class="hobby-card">
+                        <div class="hobby-icon"><i class="fas fa-music"></i></div>
+                        <div class="hobby-title">Musik</div>
+                        <div class="hobby-desc">Menikmati berbagai genre musik dan bermain gitar.</div>
+                    </div>
+                    <div class="hobby-card">
+                        <div class="hobby-icon"><i class="fas fa-hiking"></i></div>
+                        <div class="hobby-title">Berkemah</div>
+                        <div class="hobby-desc">Suka berpetualang dan berkemah di alam terbuka.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="contact" class="content-section">
+                <h2 class="section-title">Kontak</h2>
+                <div class="contact-info">
+                    <div class="contact-card">
+                        <div class="contact-icon"><i class="fas fa-envelope"></i></div>
+                        <div class="contact-details">
+                            <div class="contact-type">Email</div>
+                            <div class="contact-value">athhar.muhammadalfianda@gmail.com</div>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <div class="contact-icon"><i class="fas fa-phone"></i></div>
+                        <div class="contact-details">
+                            <div class="contact-type">Telepon</div>
+                            <div class="contact-value">+62 857 7717 9873</div>
+                        </div>
+                    </div>
+                    <div class="contact-card">
+                        <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
+                        <div class="contact-details">
+                            <div class="contact-type">Alamat</div>
+                            <div class="contact-value">Jl.Nusa Indah 1. BLOK HH27 NO 19, CURUG, KABUPATEN TANGERANG</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        window.onload = function() {
+            const loadingScreen = document.getElementById('loading');
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 500);
+        };
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('collapsed');
+            const toggleBtn = document.querySelector('.toggle-btn');
+            toggleBtn.innerHTML = sidebar.classList.contains('collapsed') ? '<i class="fas fa-bars"></i>' : '<i class="fas fa-times"></i>';
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const activeItem = document.querySelector(`.menu-item[onclick*="${sectionId}"]`);
+            if (activeItem) {
+                activeItem.classList.add('active');
+            }
+        }
+
+        window.addEventListener('resize', function() {
+            const sidebar = document.querySelector('.sidebar');
+            if (window.innerWidth <= 768) {
+                sidebar.classList.add('collapsed');
+            } else {
+                sidebar.classList.remove('collapsed');
+            }
+        });
+
+        if (window.innerWidth <= 768) {
+            document.querySelector('.sidebar').classList.add('collapsed');
+        }
+    </script>
+</body>
+</html>
